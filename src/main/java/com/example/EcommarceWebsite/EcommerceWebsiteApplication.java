@@ -3,16 +3,17 @@ package com.example.EcommarceWebsite;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
-public class EcommarceWebsiteApplication {
-
+@EnableJpaAuditing
+public class EcommerceWebsiteApplication {
 	public static void main(String[] args) {
+
 
 		Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 		dotenv.entries().forEach(entry->
 				System.setProperty(entry.getKey(),entry.getValue()));
-		SpringApplication.run(EcommarceWebsiteApplication.class, args);
+		SpringApplication.run(EcommerceWebsiteApplication.class, args);
 	}
-
 }
