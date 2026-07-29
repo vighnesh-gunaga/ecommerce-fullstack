@@ -26,7 +26,11 @@ public class Product {
     private Integer stockQuantity;
     private String imageUrl;
     private String brand;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "category_id",
+            nullable = false
+    )
     private Category category;
     @CreatedDate
     @Column(nullable = false, updatable = false)

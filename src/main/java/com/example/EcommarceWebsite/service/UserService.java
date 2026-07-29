@@ -9,6 +9,8 @@ import com.example.EcommarceWebsite.exception.InvalidCredentialException;
 import com.example.EcommarceWebsite.model.Role;
 import com.example.EcommarceWebsite.model.User;
 import com.example.EcommarceWebsite.repository.UserRepository;
+import com.example.EcommarceWebsite.security.JwtService;
+import io.jsonwebtoken.Jwt;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,39 +27,80 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtService jwtService;
 
 
-    public UserResponse register(UserRequest userRequest) {
 
-        String email = userRequest.getEmail();
-        if(userRepository.existsByEmail(email))
-        {
-            throw new EmailAlreadyExistsException("User with email "+email+ "Already Registered");
+    public UserResponse register(
+            UserRequest userRequest
+    ) {
+
+        String email = userRequest
+                .getEmail()
+                .trim()
+                .toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
+
+            throw new EmailAlreadyExistsException(
+                    "User with email "
+                            + email
+                            + " is already registered"
+            );
         }
+
         User user = new User();
 
-        user.setUsername(userRequest.getUsername());
-        user.setEmail(userRequest.getEmail());
+        user.setUsername(
+                userRequest.getUsername()
+        );
 
-        String encodePassword = passwordEncoder.encode(userRequest.getPassword());
+        user.setEmail(email);
 
-        user.setPassword(encodePassword);
+        user.setPassword(
+                passwordEncoder.encode(
+                        userRequest.getPassword()
+                )
+        );
 
+        // Every newly registered user gets USER role
         user.setRole(Role.USER);
 
-        User savedUser = userRepository.save(user);
+        // Save user in the database
+        User savedUser =
+                userRepository.save(user);
 
-        UserResponse userResponse = new UserResponse();
+        // Create response object
+        UserResponse userResponse =
+                new UserResponse();
 
-        userResponse.setId(savedUser.getId());
-        userResponse.setUsername(savedUser.getUsername());
-        userResponse.setEmail(savedUser.getEmail());
-        userResponse.setRole(savedUser.getRole());
-        userResponse.setCreatedAt(savedUser.getCreatedAt());
-        userResponse.setUpdatedAt(savedUser.getUpdatedAt());
+        userResponse.setId(
+                savedUser.getId()
+        );
 
+        userResponse.setUsername(
+                savedUser.getUsername()
+        );
+
+        userResponse.setEmail(
+                savedUser.getEmail()
+        );
+
+        userResponse.setRole(
+                savedUser.getRole()
+        );
+
+        userResponse.setCreatedAt(
+                savedUser.getCreatedAt()
+        );
+
+        userResponse.setUpdatedAt(
+                savedUser.getUpdatedAt()
+        );
+
+        // Return the response
         return userResponse;
-
     }
 
 
@@ -75,6 +118,9 @@ public class UserService {
         {
             throw new InvalidCredentialException("Invalid Email or password");
         }
-        return new LoginResponse();
+        String token = jwtService.generateToken(user);
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setToken(token);
+        return loginResponse;
     }
 }

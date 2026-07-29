@@ -10,5 +10,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class LoginResponse {
-    private String message = "Login successful";
+    private String token;
 }

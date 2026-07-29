@@ -35,4 +35,5 @@ public class Category {
     private LocalDate createdAt;
     @LastModifiedDate
     private LocalDate updatedAt;
+
 }

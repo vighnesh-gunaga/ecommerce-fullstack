@@ -18,19 +18,36 @@ import java.time.LocalDate;
 @Setter
 @EntityListeners(AuditingEntityListener.class)
 public class User {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+            strategy = GenerationType.IDENTITY
+    )
     private Long id;
+
+    @Column(nullable = false)
     private String username;
-    @Column(unique = true,nullable = false)
+
+    @Column(
+            unique = true,
+            nullable = false
+    )
     private String email;
+
+    @Column(nullable = false)
     private String password;
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
+
     @CreatedDate
-    @Column(nullable = false,updatable = false)
+    @Column(
+            nullable = false,
+            updatable = false
+    )
     private LocalDate createdAt;
+
     @LastModifiedDate
     private LocalDate updatedAt;
-
 }

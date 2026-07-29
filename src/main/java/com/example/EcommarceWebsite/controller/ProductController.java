@@ -1,5 +1,7 @@
 package com.example.EcommarceWebsite.controller;
 
+import com.example.EcommarceWebsite.dto.ProductRequest;
+import com.example.EcommarceWebsite.dto.ProductResponse;
 import com.example.EcommarceWebsite.model.Product;
 import com.example.EcommarceWebsite.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,24 +15,24 @@ public class ProductController {
     @Autowired
     private ProductService productService;
     @GetMapping("/allproducts")
-    public List<Product> getAllProducts()
+    public List<ProductResponse> getAllProducts()
     {
         return productService.getAllProducts();
     }
     @GetMapping("/productbyid/{id}")
-    public Product getProductById(@PathVariable Long id)
+    public ProductResponse getProductById(@PathVariable Long id)
     {
         return productService.getProductById(id);
     }
     @GetMapping("/productbyname/{name}")
-    public Product getProductByName(@PathVariable String name)
+    public ProductResponse getProductByName(@PathVariable String name)
     {
         return productService.getProductByName(name);
     }
     @PostMapping("/addproduct")
-    public Product addProduct(@RequestBody Product product)
+    public ProductResponse addProduct(@RequestBody ProductRequest productRequest)
     {
-        return productService.addProduct(product);
+        return productService.addProduct(productRequest);
     }
     @PutMapping("/updateproduct/{id}")
     public Product updateProduct(@RequestBody Product product,@PathVariable Long id)

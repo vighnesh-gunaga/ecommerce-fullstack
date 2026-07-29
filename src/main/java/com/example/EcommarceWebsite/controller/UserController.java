@@ -6,6 +6,7 @@ import com.example.EcommarceWebsite.dto.UserRequest;
 import com.example.EcommarceWebsite.dto.UserResponse;
 import com.example.EcommarceWebsite.model.User;
 import com.example.EcommarceWebsite.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,15 +18,21 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public UserResponse register(@RequestBody UserRequest userRequest)
-    {
+    public UserResponse register(
+            @Valid @RequestBody UserRequest userRequest
+    ) {
+
+        System.out.println("REGISTER API CALLED");
+
         return userService.register(userRequest);
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest loginRequest)
-    {
-        return userService.login(loginRequest);
+    public LoginResponse login(@Valid
+            @RequestBody LoginRequest loginRequest) {
+        return userService.login(
+                loginRequest
+        );
     }
 
 

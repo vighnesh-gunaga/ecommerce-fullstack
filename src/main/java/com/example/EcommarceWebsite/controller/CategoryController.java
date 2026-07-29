@@ -1,7 +1,10 @@
 package com.example.EcommarceWebsite.controller;
 
+import com.example.EcommarceWebsite.dto.CategoryRequest;
+import com.example.EcommarceWebsite.dto.CategoryResponse;
 import com.example.EcommarceWebsite.model.Category;
 import com.example.EcommarceWebsite.service.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,9 +31,9 @@ public class CategoryController {
         return categoryService.getCategoryByName(name);
     }
     @PostMapping("/addcategory")
-    public Category addCategory(@RequestBody Category category)
+    public CategoryResponse addCategory(@Valid @RequestBody CategoryRequest categoryRequest)
     {
-        return categoryService.addcategory(category);
+        return categoryService.addcategory(categoryRequest);
     }
     @PutMapping("/updatecategory/{id}")
     public Category updateCategory(@RequestBody Category category,@PathVariable Long id)
