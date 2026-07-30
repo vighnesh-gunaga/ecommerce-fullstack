@@ -9,6 +9,10 @@ import com.example.EcommarceWebsite.model.Product;
 import com.example.EcommarceWebsite.repository.CategoryRepository;
 import com.example.EcommarceWebsite.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,32 +25,35 @@ public class ProductService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    public List<ProductResponse> getAllProducts() {
+    private ProductResponse mapToProductResponse(Product product) {
 
-        List<Product> products = productRepository.findAll();
+        ProductResponse response = new ProductResponse();
 
-        return products.stream()
-                .map(product -> {
+        response.setId(product.getId());
+        response.setName(product.getName());
+        response.setDescription(product.getDescription());
+        response.setPrice(product.getPrice());
+        response.setStockQuantity(product.getStockQuantity());
+        response.setImageUrl(product.getImageUrl());
+        response.setBrand(product.getBrand());
+        response.setCategoryId(product.getCategory().getId());
+        response.setCategoryName(product.getCategory().getName());
+        response.setCreatedAt(product.getCreatedAt());
+        response.setUpdatedAt(product.getUpdatedAt());
 
-                    ProductResponse response = new ProductResponse();
+        return response;
+    }
+    public Page<ProductResponse> getAllProducts(int page, int size,String sortBy,String direction) {
 
-                    response.setId(product.getId());
-                    response.setName(product.getName());
-                    response.setDescription(product.getDescription());
-                    response.setPrice(product.getPrice());
-                    response.setStockQuantity(product.getStockQuantity());
-                    response.setImageUrl(product.getImageUrl());
-                    response.setBrand(product.getBrand());
+        Sort sort = direction.equalsIgnoreCase("desc")?
+                Sort.by(sortBy).descending():
+                Sort.by(sortBy).ascending();
 
-                    response.setCategoryId(product.getCategory().getId());
-                    response.setCategoryName(product.getCategory().getName());
+        Pageable pageable = PageRequest.of(page, size ,sort);
 
-                    response.setCreatedAt(product.getCreatedAt());
-                    response.setUpdatedAt(product.getUpdatedAt());
+        Page<Product> productPage = productRepository.findAll(pageable);
 
-                    return response;
-                })
-                .toList();
+        return productPage.map(this::mapToResponse);
     }
 
     public ProductResponse getProductById(Long id) {
@@ -135,8 +142,27 @@ public class ProductService {
 
         return productResponse;
     }
+    private ProductResponse mapToResponse(Product product) {
 
-    public Product updateProduct(Product product, Long id) {
+        ProductResponse response = new ProductResponse();
+
+        response.setId(product.getId());
+        response.setName(product.getName());
+        response.setDescription(product.getDescription());
+        response.setPrice(product.getPrice());
+        response.setStockQuantity(product.getStockQuantity());
+        response.setImageUrl(product.getImageUrl());
+        response.setBrand(product.getBrand());
+
+        response.setCategoryId(product.getCategory().getId());
+        response.setCategoryName(product.getCategory().getName());
+
+        response.setCreatedAt(product.getCreatedAt());
+        response.setUpdatedAt(product.getUpdatedAt());
+
+        return response;
+    }
+    public ProductResponse updateProduct(ProductRequest product, Long id) {
 
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() ->
@@ -156,15 +182,14 @@ public class ProductService {
         existingProduct.setImageUrl(product.getImageUrl());
         existingProduct.setBrand(product.getBrand());
 
-        if (product.getCategory() == null
-                || product.getCategory().getId() == null) {
+        if (product.getCategoryId() == null) {
 
             throw new IllegalArgumentException(
                     "Category ID is required"
             );
         }
 
-        Long categoryId = product.getCategory().getId();
+        Long categoryId = product.getCategoryId();
 
         Category category = categoryRepository
                 .findById(categoryId)
@@ -178,7 +203,21 @@ public class ProductService {
 
         existingProduct.setCategory(category);
 
-        return productRepository.save(existingProduct);
+        Product product1 = productRepository.save(existingProduct);
+
+        ProductResponse productResponse = new ProductResponse();
+        productResponse.setId(product1.getId());
+        productResponse.setName(product1.getName());
+        productResponse.setDescription(product1.getDescription());
+        productResponse.setPrice(product1.getPrice());
+        productResponse.setStockQuantity(product1.getStockQuantity());
+        productResponse.setImageUrl(product1.getImageUrl());
+        productResponse.setBrand(product1.getBrand());
+        productResponse.setCategoryId(product1.getCategory().getId());
+        productResponse.setCategoryName(product1.getCategory().getName());
+        productResponse.setCreatedAt(product1.getCreatedAt());
+        productResponse.setUpdatedAt(product1.getUpdatedAt());
+        return productResponse;
     }
 
     public void deleteProduct(Long id) {
@@ -194,5 +233,75 @@ public class ProductService {
                 );
 
         productRepository.delete(product);
+    }
+
+    public List<ProductResponse> getProductsByCategory(Long categoryId) {
+        List<Product> products = productRepository.findByCategoryId(categoryId);
+
+        return products.stream()
+                .map(this::mapToProductResponse)
+                .toList();
+    }
+
+    public List<ProductResponse> searchProduct(String keyword) {
+
+        List<Product> products = productRepository.findByNameContainingIgnoreCase(keyword);
+        return products.stream().map(this::mapToProductResponse).toList();
+    }
+
+    public List<ProductResponse> getProductByBrand(String brand) {
+
+        List<Product> products = productRepository.findProductByBrandContainingIgnoreCase(brand);
+        return products.stream().map(this::mapToProductResponse).toList();
+    }
+
+    public List<ProductResponse> getProductByCategory(Long categoryId) {
+
+        List<Product> products = productRepository.findProductByCategoryId(categoryId);
+        return products.stream().map(this::mapToProductResponse).toList();
+    }
+
+    public List<ProductResponse> getProductsByPrice(double min, double max) {
+
+        List<Product> products = productRepository.findByPriceBetween(min, max);
+
+        return products.stream()
+                .map(this::mapToProductResponse)
+                .toList();
+    }
+    public Page<ProductResponse> filterProducts(
+
+            String brand,
+
+            Long categoryId,
+
+            Double minPrice,
+
+            Double maxPrice,
+
+            int page,
+
+            int size,
+
+            String sortBy,
+
+            String direction
+    ) {
+
+        Sort sort = direction.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Product> products = productRepository.filterProducts(
+                brand,
+                categoryId,
+                minPrice,
+                maxPrice,
+                pageable
+        );
+
+        return products.map(this::mapToProductResponse);
     }
 }

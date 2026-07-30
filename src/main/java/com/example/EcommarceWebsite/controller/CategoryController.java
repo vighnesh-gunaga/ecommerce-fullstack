@@ -16,17 +16,17 @@ public class CategoryController {
     @Autowired
     private CategoryService categoryService;
     @GetMapping("/allcategory")
-    public List<Category> getAllCategory()
+    public List<CategoryResponse> getAllCategory()
     {
         return categoryService.getAllCategory();
     }
     @GetMapping("/categories/{id}")
-    public Category getCategoryById(@PathVariable Long id)
+    public CategoryResponse getCategoryById(@PathVariable Long id)
     {
         return categoryService.getCategoryById(id);
     }
     @GetMapping("/categories/name/{name}")
-    public Category getCategoryByName(@PathVariable String name)
+    public CategoryResponse getCategoryByName(@PathVariable String name)
     {
         return categoryService.getCategoryByName(name);
     }
@@ -36,7 +36,7 @@ public class CategoryController {
         return categoryService.addcategory(categoryRequest);
     }
     @PutMapping("/updatecategory/{id}")
-    public Category updateCategory(@RequestBody Category category,@PathVariable Long id)
+    public CategoryResponse updateCategory(@RequestBody Category category,@PathVariable Long id)
     {
         return categoryService.updateCategory(category,id);
     }

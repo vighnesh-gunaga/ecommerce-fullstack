@@ -5,6 +5,7 @@ import com.example.EcommarceWebsite.dto.CategoryResponse;
 import com.example.EcommarceWebsite.exception.CategoryNotFoundException;
 import com.example.EcommarceWebsite.model.Category;
 import com.example.EcommarceWebsite.repository.CategoryRepository;
+import com.example.EcommarceWebsite.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,26 +16,50 @@ public class CategoryService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    public List<Category> getAllCategory() {
-        return categoryRepository.findAll();
+    @Autowired
+    private ProductRepository productRepository;
+
+    public List<CategoryResponse> getAllCategory() {
+        List<Category> categories = categoryRepository.findAll();
+
+        return categories.stream().map(category -> {
+            CategoryResponse categoryResponse = new CategoryResponse();
+            categoryResponse.setId(category.getId());
+            categoryResponse.setName(category.getName());
+            categoryResponse.setDescription(category.getDescription());
+            categoryResponse.setCreatedAt(category.getCreatedAt());
+            categoryResponse.setUpdatedAt(category.getUpdatedAt());
+            return categoryResponse;
+        }).toList();
     }
 
-    public Category getCategoryById(Long id) {
-        return categoryRepository.findById(id).orElseThrow(()->new
+    public CategoryResponse getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id).orElseThrow(()->new
                 CategoryNotFoundException("Not found"));
+        CategoryResponse categoryResponse = new CategoryResponse();
+        categoryResponse.setId(category.getId());
+        categoryResponse.setName(category.getName());
+        categoryResponse.setDescription(category.getDescription());
+        categoryResponse.setCreatedAt(category.getCreatedAt());
+        categoryResponse.setUpdatedAt(category.getUpdatedAt());
+        return categoryResponse;
     }
 
-//    public Category getCategoryByName(String name) {
-//        return categoryRepository.findByName(name).orElseThrow(()->new CategoryNotFoundException("Category with name "+name+" Not found"));
-//    }
-    public Category getCategoryByName(String name) {
+    public CategoryResponse getCategoryByName(String name) {
 
-        return categoryRepository.findByName(name)
+        Category category = categoryRepository.findByName(name)
                 .orElseThrow(() ->
                         new CategoryNotFoundException(
                                 "Category with name " + name + " not found"
                         )
                 );
+        CategoryResponse categoryResponse = new CategoryResponse();
+        categoryResponse.setId(category.getId());
+        categoryResponse.setName(category.getName());
+        categoryResponse.setDescription(category.getDescription());
+        categoryResponse.setCreatedAt(category.getCreatedAt());
+        categoryResponse.setUpdatedAt(category.getUpdatedAt());
+        return categoryResponse;
     }
     public CategoryResponse addcategory(CategoryRequest categoryRequest) {
         Category category = new Category();
@@ -54,7 +79,7 @@ public class CategoryService {
 
     }
 
-    public Category updateCategory(Category category, Long id) {
+    public CategoryResponse updateCategory(Category category, Long id) {
 
         Category existingCategory = categoryRepository.findById(id)
                 .orElseThrow(() ->
@@ -66,21 +91,28 @@ public class CategoryService {
         existingCategory.setName(category.getName());
         existingCategory.setDescription(category.getDescription());
 
-        return categoryRepository.save(existingCategory);
+        Category updateCategory = categoryRepository.save(existingCategory);
+        CategoryResponse categoryResponse = new CategoryResponse();
+        categoryResponse.setId(updateCategory.getId());
+        categoryResponse.setName(updateCategory.getName());
+        categoryResponse.setDescription(updateCategory.getDescription());
+        categoryResponse.setCreatedAt(updateCategory.getCreatedAt());
+        categoryResponse.setUpdatedAt(updateCategory.getUpdatedAt());
+        return categoryResponse;
     }
 
 
     public void deleteCategory(Long id) {
 
-        Category category = categoryRepository
-                .findById(id)
+        Category category = categoryRepository.findById(id)
                 .orElseThrow(() ->
-                        new CategoryNotFoundException(
-                                "Category with id "
-                                        + id
-                                        + " not found"
-                        )
-                );
+                        new CategoryNotFoundException("Category not found"));
+
+        if (productRepository.existsByCategoryId(id)) {
+            throw new IllegalStateException(
+                    "Cannot delete category because products exist in this category"
+            );
+        }
 
         categoryRepository.delete(category);
     }
