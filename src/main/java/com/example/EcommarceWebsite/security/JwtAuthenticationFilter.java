@@ -22,7 +22,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
-    // Constructor injection
     public JwtAuthenticationFilter(
             JwtService jwtService,
             UserRepository userRepository
@@ -38,32 +37,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Get Authorization header
         String authHeader = request.getHeader("Authorization");
 
-        // If Authorization header is missing or does not start with Bearer,
-        // continue without JWT authentication
+        // No JWT token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Remove "Bearer " from the token
         String token = authHeader.substring(7);
 
         try {
 
-            // Extract email from JWT token
+            // Extract email from token
             String email = jwtService.extractEmailFromToken(token);
 
-            // Check whether authentication already exists
-            if (email != null
-                    && SecurityContextHolder
-                    .getContext()
-                    .getAuthentication() == null) {
+            if (email != null &&
+                    SecurityContextHolder.getContext()
+                            .getAuthentication() == null) {
 
-                // Find user in the database
+                // Find user
                 Optional<User> optionalUser =
                         userRepository.findByEmail(email);
 
@@ -71,47 +64,51 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     User user = optionalUser.get();
 
-                    // Validate JWT token
+                    // Validate token
                     if (jwtService.isTokenValid(token, user)) {
 
-                        // Convert USER or ADMIN role to:
-                        // ROLE_USER or ROLE_ADMIN
+                        // Convert USER -> ROLE_USER
+                        // Convert ADMIN -> ROLE_ADMIN
                         SimpleGrantedAuthority authority =
                                 new SimpleGrantedAuthority(
-                                        "ROLE_"
-                                                + user.getRole().name()
+                                        "ROLE_" + user.getRole().name()
                                 );
 
-                        // Create authenticated user object
-                        UsernamePasswordAuthenticationToken
-                                authentication =
+                        /*
+                         * IMPORTANT:
+                         * Use email as principal instead of User entity.
+                         */
+                        UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(
-                                        user,
+                                        user.getEmail(),
                                         null,
-                                        Collections.singletonList(
-                                                authority
-                                        )
+                                        Collections.singletonList(authority)
                                 );
 
-                        // Store authentication in Spring Security
                         SecurityContextHolder
                                 .getContext()
-                                .setAuthentication(
-                                        authentication
-                                );
+                                .setAuthentication(authentication);
+
+                        System.out.println(
+                                "JWT Authentication successful: "
+                                        + user.getEmail()
+                                        + " | ROLE_"
+                                        + user.getRole().name()
+                        );
                     }
                 }
             }
 
         } catch (Exception exception) {
 
-            // Invalid, expired, malformed, or incorrect JWT token.
-            // Do not authenticate the user.
-            // Spring Security will handle the request based on SecurityConfig.
+            System.out.println(
+                    "JWT Authentication failed: "
+                            + exception.getMessage()
+            );
+
             SecurityContextHolder.clearContext();
         }
 
-        // Continue to the next security filter
         filterChain.doFilter(request, response);
     }
 }

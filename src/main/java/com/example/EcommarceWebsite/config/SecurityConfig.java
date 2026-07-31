@@ -16,10 +16,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // Constructor injection
-    public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter
-    ) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
@@ -33,22 +30,23 @@ public class SecurityConfig {
             HttpSecurity http
     ) throws Exception {
 
-        return http
-
-                // Disable CSRF because this is a stateless REST API
+        http
+                // REST API + JWT
                 .csrf(csrf -> csrf.disable())
 
-                // JWT-based authentication does not use HTTP sessions
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(
+                // JWT is stateless
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
 
-                // Authorization rules
                 .authorizeHttpRequests(auth -> auth
 
-                        // Public APIs
+                        // ==============================
+                        // PUBLIC
+                        // ==============================
+
                         .requestMatchers(
                                 "/api/user/register",
                                 "/api/user/login",
@@ -58,70 +56,80 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
-                        // USER and ADMIN can view products
+
+                        // ==============================
+                        // PRODUCT
+                        // ==============================
+
+                        // USER + ADMIN → GET
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/product/**"
-                        ).hasAnyRole(
-                                "USER",
-                                "ADMIN"
-                        )
+                        ).hasAnyRole("USER", "ADMIN")
 
-                        // Only ADMIN can add products
+                        // ADMIN → POST
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/product/**"
                         ).hasRole("ADMIN")
 
-                        // Only ADMIN can update products
+                        // ADMIN → PUT
                         .requestMatchers(
                                 HttpMethod.PUT,
                                 "/api/product/**"
                         ).hasRole("ADMIN")
 
-                        // Only ADMIN can delete products
+                        // ADMIN → DELETE
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/api/product/**"
                         ).hasRole("ADMIN")
 
-                        // USER and ADMIN can view categories
+
+                        // ==============================
+                        // CATEGORY
+                        // ==============================
+
+                        // USER + ADMIN → GET
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/category/**"
-                        ).hasAnyRole(
-                                "USER",
-                                "ADMIN"
-                        )
+                        ).hasAnyRole("USER", "ADMIN")
 
-                        // Only ADMIN can add categories
+                        // ADMIN → POST
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/category/**"
                         ).hasRole("ADMIN")
 
-                        // Only ADMIN can update categories
+                        // ADMIN → PUT
                         .requestMatchers(
                                 HttpMethod.PUT,
                                 "/api/category/**"
                         ).hasRole("ADMIN")
 
-                        // Only ADMIN can delete categories
+                        // ADMIN → DELETE
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/api/category/**"
                         ).hasRole("ADMIN")
 
-                        // Any other API requires authentication
+
+                        // ==============================
+                        // EVERYTHING ELSE
+                        // ==============================
+
+                        // Cart, orders, wishlist, etc.
+                        // automatically require authentication
                         .anyRequest().authenticated()
                 )
 
-                // Run JWT filter before Spring's username/password filter
+                // JWT filter runs before Spring's authentication filter
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
-                )
+                );
 
-                .build();
+        return http.build();
     }
 }
